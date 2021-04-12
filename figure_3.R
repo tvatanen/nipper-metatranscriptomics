@@ -8,7 +8,7 @@ library(ggbeeswarm)
 library(phangorn)
 
 metadata_dna <- 
-  read_xlsx("../metadata//nipper_sample_metadata.xlsx", sheet = 2) %>%
+  read_xlsx("data/nipper_sample_metadata.xlsx", sheet = 2) %>%
   rename(sampleID = `Sequencing name`,
          stool_sample_id = `Sample ID`,
          country = `Stool Site`,
@@ -22,7 +22,7 @@ metadata_dna <-
   filter(preservation_method == "RNA later",
          mother_baby != "NA")
 
-load("strain_haplotype_dist.RData")
+load("data/strain_haplotype_dist.RData")
 
 comparisons_metadata <-
   comparisons %>%
@@ -95,12 +95,8 @@ transmission_events %>%
   select(species)
 # one tentative phage transmission; Enterobacteria phage HK022
 
-transmission_events %>%
-  select(species, sample1_family) %>%
-  write_delim(delim = "\t", path = "maternally_transmitted_strains.tsv")
-
 # Phylogenetic tree of B. ovatus
-seq <- read.dna("s__Bacteroides_ovatus.fasta", format="fasta")
+seq <- read.dna("data/s__Bacteroides_ovatus.fasta", format="fasta")
 
 ovatus_phyDat <- phyDat(seq, type = "DNA", levels = NULL)
 ovatus_phyDat <- subset(ovatus_phyDat, subset = str_extract(names(ovatus_phyDat), "neslig_[0-9]+") %in% metadata_dna$sampleID)

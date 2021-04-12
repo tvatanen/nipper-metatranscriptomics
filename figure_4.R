@@ -2,7 +2,7 @@ library(tidyverse)
 library(RColorBrewer)
 
 # load gene mgx and mtx profiles of maternally transmitted strains
-load("combined_gene_quantifications.RData")
+load("data/combined_gene_quantifications.RData")
 
 combined_genes %>%
   filter(!(grepl("unknown", gene_family))) %>% # this filters out UniRef90_unknown rows

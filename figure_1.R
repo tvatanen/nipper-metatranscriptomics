@@ -8,7 +8,7 @@ library(TSP)
 library(ggbeeswarm)
 
 metadata_dna <- 
-  read_xlsx("nipper_sample_metadata.xlsx", sheet = 2) %>%
+  read_xlsx("data/nipper_sample_metadata.xlsx", sheet = 2) %>%
   rename(sampleID = `Sequencing name`,
          stool_sample_id = `Sample ID`,
          country = `Stool Site`,
@@ -22,7 +22,7 @@ metadata_dna <-
   filter(preservation_method == "RNA later",
          mother_baby != "NA")
 
-metaphlan_species <- read_metaphlan_table("nipper_metaphlan_profiles.tsv")
+metaphlan_species <- read_metaphlan_table("data/nipper_metaphlan_profiles.tsv")
 
 metaphlan_species_long <- 
   metaphlan_species %>%

@@ -10,7 +10,7 @@ library(rstatix)
 library(openxlsx)
 
 metadata_dna <- 
-  read_xlsx("nipper_sample_metadata.xlsx", sheet = 2) %>%
+  read_xlsx("data/nipper_sample_metadata.xlsx", sheet = 2) %>%
   rename(sampleID = `Sequencing name`,
          stool_sample_id = `Sample ID`,
          country = `Stool Site`,
@@ -25,7 +25,7 @@ metadata_dna <-
          mother_baby != "NA")
 
 metacyc_dna <- 
-  read_tsv("nipper_metacyc_pathway_abundance_dna.txt") %>%
+  read_tsv("data/nipper_metacyc_pathway_abundance_dna.txt") %>%
   rename(pathway = `# Pathway`) %>%
   pivot_longer(-pathway, names_to = "sampleID", values_to = "cpm") %>%
   mutate(sampleID = str_extract(sampleID, "neslig_[0-9]+")) %>%
@@ -160,7 +160,7 @@ metacyc_dna %>%
 
 # RNA
 metadata_rna <- 
-  read_xlsx("nipper_sample_metadata.xlsx", sheet = 1) %>%
+  read_xlsx("data/nipper_sample_metadata.xlsx", sheet = 1) %>%
   rename(sampleID = `Sequencing name`,
          stool_sample_id = `Sample ID`,
          country = `Stool Site`,
@@ -174,7 +174,7 @@ metadata_rna <-
   filter(mother_baby != "NA")
 
 metacyc_rna <- 
-  read_tsv("nipper_metacyc_pathway_abundance_rna.txt") %>%
+  read_tsv("data/nipper_metacyc_pathway_abundance_rna.txt") %>%
   rename(pathway = `# Pathway`) %>%
   pivot_longer(-pathway, names_to = "sampleID", values_to = "cpm") %>%
   mutate(sampleID = str_extract(sampleID, "neslig_[0-9]+")) %>%
