@@ -1,2 +1,7 @@
-# nipper-metatranscriptomics
-Analysis of metagenomic and metatranscriptomic data from the NiPPeR Study
+# Transcription shifts in gut bacteria shared between mothers and their infants: data from the NiPPeR Study
+The infant gut microbiome contains a portion of bacteria that originate from the maternal gut. In the infant gut these bacteria encounter a new metabolic environment that differs from the adult gut, consequently requiring adjustments in their activities. We utilized community RNA sequencing data (metatranscriptomes) from ten mother-infant dyads participating in the NiPPeR Study to characterize bacterial gene expression shifts following mother-to-infant transmission. Maternally derived bacterial strains adapted by large scale gene expression shifts following the transmission to the infant gut, with 12,564 activated and 14,844 deactivated gene families, including 1,007 transferases and 85 bacteriophage genes. The implicated genes were most numerous and the magnitude shifts greatest in Bacteroides spp. This study demonstrates environment-dependent, strain-specific shifts in gut bacteria function and underscores the importance of metatranscriptomic analysis in microbiome studies.
+
+This repository contains data and analysis scripts used in a study available as a preprint: 
+
+Transcription shifts in gut bacteria shared between mothers and their infants: data from the NiPPeR Study.
+Vatanen T, Sakwinska O, Wilson B, Combremont S, Cutfield W, Chan S-Y, Godfrey K, O’Sullivan J. 2021. http://dx.doi.org/10.21203/rs.3.rs-349416/v1
