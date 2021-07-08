@@ -247,21 +247,6 @@ normalized_expression2 %>%
 filter(upregulated_genes, gene_name == "NO_NAME")
 # 5,764 with no annotation
 5764 / 12564
-filter(upregulated_genes, grepl("[T|t]ransport", gene_name))
-# 358 transport related
-filter(upregulated_genes, grepl("[T|t]ransferase", gene_name)) 
-# 673 Transferases
-filter(upregulated_genes, grepl("[H|h]ydrolase", gene_name)) 
-# 138 Hydrolases
-filter(upregulated_genes, grepl("[P|p]hage", gene_name)) 
-# 17 phage proteins
-filter(upregulated_genes, grepl("[S|s]us[A-Z]", gene_name))
-# 83 SusC/D related genes
-filter(upregulated_genes, grepl("[T|t]on[B|b]", gene_name))
-# 71 TonB related genes
-filter(upregulated_genes, grepl("Two_component_system", gene_name))
-# 17 Two component system (quorum sensing) related genes
-
 
 downregulated_genes <- 
   normalized_expression2 %>%
@@ -286,30 +271,51 @@ downregulated_genes %>%
 filter(downregulated_genes, gene_name == "NO_NAME")
 # 9,935 with no annotation
 9935 / 14844
-filter(downregulated_genes, grepl("[T|t]ransport", gene_name))
-# 395 transport related
-filter(downregulated_genes, grepl("[T|t]ransferase", gene_name)) 
-# 334 Transferases
-filter(downregulated_genes, grepl("[H|h]ydrolase", gene_name)) 
-# 257 Hydrolases
-filter(downregulated_genes, grepl("[P|p]hage", gene_name)) 
-# 68 phage proteins
-filter(downregulated_genes, grepl("[S|s]us[A-Z]", gene_name))
-# 317 SusC/D related genes
-filter(downregulated_genes, grepl("[T|t]on[B|b]", gene_name))
-# 179 TonB related genes
-filter(downregulated_genes, grepl("Two_component_system", gene_name))
-# 71 Two component system (quorum sensing) related genes
 
-# Similar:
-# Transport: 358 vs. 395
-# Transferases: 673 vs. 334
-# Hydrolases: 138 vs. 257
-# Phage proteins: 17 vs. 68
-# SusC/D: 83 vs. 317
-# TonB: 71 vs. 179
-# Quorum sensing: 17 vs. 71
+n_per_strain <- 
+  normalized_expression2 %>%
+  group_by(species, family_id) %>%
+  summarise(n = n(),
+            n_up = sum(upregulated),
+            n_down = sum(downregulated),
+            n_changed = n_up + n_down)
 
+n_deactivations <- 
+  normalized_expression2 %>%
+  left_join(gene_names)  %>%
+  group_by(species, family_id, gene_name) %>%
+  summarise(n_function = n(),
+            n_function_up = sum(upregulated),
+            n_function_down = sum(downregulated),
+            n_function_changed = n_function_up + n_function_down) %>%
+  left_join(n_per_strain) %>%
+  ungroup()
+
+library(rstatix)
+wilcox_test_res_up <-
+  n_deactivations %>%
+  filter(gene_name == "NO_NAME") %>%
+  mutate(perc_function = n_function / n,
+         perc_function_upregulated = n_function_up / n_changed) %>%
+  select(species, family_id, gene_name, perc_function, perc_function_upregulated) %>%
+  pivot_longer(contains("perc")) %>%
+  wilcox_test(value ~ name, data = ., paired = T)
+# less unannoteted genes among activated genes
+# p = 0.000000954
+
+wilcox_test_res_down <-
+  n_deactivations %>%
+  filter(gene_name == "NO_NAME") %>%
+  mutate(perc_function = n_function / n,
+         perc_function_downregulated = n_function_down / n_changed) %>%
+  select(species, family_id, gene_name, perc_function, perc_function_downregulated) %>%
+  pivot_longer(contains("perc")) %>%
+  wilcox_test(value ~ name, data = ., paired = T)
+# more unannotated genes among deactivated genes
+# p = 0.00000954
+
+
+### Replication within species
 gene_replication <- upregulated_genes %>%
   group_by(gene_family, species) %>%
   summarise(n_replicates = n()) %>%

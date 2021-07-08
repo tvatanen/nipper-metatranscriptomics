@@ -7,8 +7,19 @@ library(cowplot)
 library(TSP)
 library(ggbeeswarm)
 
+setwd("~/Dropbox/liggins/nipper/manuscript/")
+
+read_counts_mgx <- read_tsv("../data/mgx/kneaddata_read_count_table.tsv") %>%
+  mutate(total_raw_reads = `raw pair1` + `raw pair2`,
+         total_trimmed_reads = `trimmed pair1` + `trimmed pair2` + `trimmed orphan1`+ `trimmed orphan2`,
+         total_decontaminaded_reads = `decontaminated Homo_sapiens pair1` + `decontaminated Homo_sapiens pair2` +
+           `decontaminated Homo_sapiens orphan1` + `decontaminated Homo_sapiens orphan2`,
+         total_final_reads = `final pair1` + `final pair2` + `final orphan1` + `final orphan2`,
+         total_human_reads = total_trimmed_reads - total_decontaminaded_reads,
+         percentage_human_reads = total_human_reads / total_trimmed_reads * 100)
+
 metadata_dna <- 
-  read_xlsx("data/nipper_sample_metadata.xlsx", sheet = 2) %>%
+  read_xlsx("../metadata//nipper_sample_metadata.xlsx", sheet = 2) %>%
   rename(sampleID = `Sequencing name`,
          stool_sample_id = `Sample ID`,
          country = `Stool Site`,
@@ -22,7 +33,18 @@ metadata_dna <-
   filter(preservation_method == "RNA later",
          mother_baby != "NA")
 
-metaphlan_species <- read_metaphlan_table("data/nipper_metaphlan_profiles.tsv")
+read_counts_mgx %>%
+  mutate(sampleID = str_extract(Sample, "neslig_[0-9]+")) %>%
+  filter(sampleID %in% metadata_dna$sampleID) %>%
+  summarise(mean = mean(`final pair1`),
+            min = min(`final pair1`),
+            max = max(`final pair1`),
+            sd = sd(`final pair1`))
+
+
+metaphlan_species <- read_metaphlan_table("../extraction_pilot/metaphlan_merged_results.tsv")
+
+rownames(metaphlan_species)
 
 metaphlan_species_long <- 
   metaphlan_species %>%
@@ -57,6 +79,7 @@ tibble(sampleID = rownames(mds_res$points),
   coord_equal() +
   theme_bw() +
   scale_fill_manual(values = brewer.pal(3, "Set2")[c(2,3)]) +
+  geom_path(aes(group = family_id), color = "gray") +
   xlab("PCo1") +
   ylab("PCo2") + 
   scale_x_continuous(breaks = c()) +
@@ -64,6 +87,7 @@ tibble(sampleID = rownames(mds_res$points),
   theme(legend.position = c(0.1, 0.9),
         legend.background = element_rect(color = "black", size=0.2, linetype="solid"),
         legend.title = element_blank())
+
 ggsave("pcoa.pdf", w = 2, h = 2, useDingbats = F)
 
 metadata_dna$sampleID == rownames(mds_res$points)
@@ -97,31 +121,34 @@ metaphlan_profiles_infants <-
   inner_join(metadata_dna) %>%
   filter(mother_baby == "Baby") 
 
-metaphlan_wide <-
-  metaphlan_profiles_infants %>%
-  select(sampleID, species, relative_abundance) %>%
-  pivot_wider(names_from = species, values_from = relative_abundance) %>%
-  column_to_rownames("sampleID")
+# metaphlan_wide <-
+#   metaphlan_profiles_infants %>%
+#   select(sampleID, species, relative_abundance) %>%
+#   pivot_wider(names_from = species, values_from = relative_abundance) %>%
+#   column_to_rownames("sampleID")
+# 
+# sample_dist <- vegdist(metaphlan_wide)
+# tsp <- TSP(sample_dist)
+# order <- solve_TSP(tsp)
 
-sample_dist <- vegdist(metaphlan_wide)
-tsp <- TSP(sample_dist)
-order <- solve_TSP(tsp)
-
+sample_order <- metaphlan_profiles_infants %>%
+  distinct(family_id) %>%
+  pull(family_id)
 
 metaphlan_profiles_infants %>%
-  mutate(sampleID = factor(sampleID, levels = labels(order)),
+  mutate(family_id = factor(family_id, levels = sample_order),
          species = factor(species, levels = c(infant_species, "Other"))) %>%
-  ggplot(aes(x=sampleID, y = relative_abundance, fill = species)) +
+  ggplot(aes(x=family_id, y = relative_abundance, fill = species)) +
   geom_bar(stat = "identity") +
   theme_cowplot() + 
   scale_fill_manual(values = c(brewer.pal(7, "Set2"), brewer.pal(7, "Set3"), "gray"),
                     name = "") +
   ylab("Relative abundance") +
-  xlab("") +
+  xlab("Family ID") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ggsave("infant_profiles.pdf", w = 6, h = 5)
   
-# maternal bar plots
+# mom bar plots
 maternal_species <-
   metaphlan_species_rna_later %>%
   inner_join(metadata_dna) %>%
@@ -144,28 +171,28 @@ metaphlan_profiles_moms <-
   inner_join(metadata_dna) %>%
   filter(mother_baby == "Mother") 
 
-metaphlan_wide <-
-  metaphlan_profiles_moms %>%
-  select(sampleID, species, relative_abundance) %>%
-  pivot_wider(names_from = species, values_from = relative_abundance) %>%
-  column_to_rownames("sampleID")
-
-sample_dist <- vegdist(metaphlan_wide)
-tsp <- TSP(sample_dist)
-order <- solve_TSP(tsp)
+# metaphlan_wide <-
+#   metaphlan_profiles_moms %>%
+#   select(sampleID, species, relative_abundance) %>%
+#   pivot_wider(names_from = species, values_from = relative_abundance) %>%
+#   column_to_rownames("sampleID")
+# 
+# sample_dist <- vegdist(metaphlan_wide)
+# tsp <- TSP(sample_dist)
+# order <- solve_TSP(tsp)
 
 metaphlan_profiles_moms %>%
-  mutate(sampleID = factor(sampleID, levels = labels(order)),
+  mutate(family_id = factor(family_id, levels = sample_order),
          species = factor(species, levels = c(maternal_species, "Other"))) %>%
-  ggplot(aes(x=sampleID, y = relative_abundance, fill = species)) +
+  ggplot(aes(x=family_id, y = relative_abundance, fill = species)) +
   geom_bar(stat = "identity") +
   theme_cowplot() + 
   scale_fill_manual(values = c(brewer.pal(7, "Set2"), brewer.pal(7, "Set3"), "gray"),
                     name = "") +
   ylab("Relative abundance") +
-  xlab("") +
+  xlab("Family ID") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
-ggsave("maternal_profiles.pdf", w = 6.5, h = 5)
+ ggsave("maternal_profiles.pdf", w = 6.3, h = 5)
 
 alpha_div <- 
   metaphlan_species_rna_later %>%
@@ -185,3 +212,5 @@ tibble(alpha_div = alpha_div,
   xlab("") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ggsave("alpha_div.pdf", w=1.5, h=2.5, useDingbats = F)
+
+
